@@ -14,6 +14,7 @@ const port = process.env.PORT || 3000;
 (async () => {
     try {
         await connectDB(process.env.MONGODB_URL);
+        console.log("this is the url we are connecting to", process.env.MONGODB_URL)
         console.log('Connected to MongoDB');
     } catch (error) {
         console.error("MongoDB connection error:", error.message);

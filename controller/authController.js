@@ -71,7 +71,9 @@ exports.login = async (req, res) => {
         const refreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_SECRET, { expiresIn: '7d' });
 
         user.refreshToken = refreshToken;
+        user.markModified("refreshToken"); 
         await user.save();
+
 
         return res.status(200).json({
             message: "User is Logged In Successfully",
@@ -124,24 +126,18 @@ exports.updateUser = async (req, res) => {
 
 exports.refreshToken = async (req, res) => {
     try {
-        const { refreshToken } = req.body;
+        const refreshToken = req.header("Authorization");
 
         if (!refreshToken) {
             return res.status(403).json({ message: "Refresh Token is required" });
         }
-
-        const user = await User.findOne({ refreshToken });
-
-        if (!user) {
-            return res.status(403).json({ message: "Invalid Refresh Token" });
-        }
-
-        jwt.verify(refreshToken, process.env.REFRESH_SECRET, (err, decoded) => {
+        const token = refreshToken.split(" ")[1];
+        jwt.verify(token, process.env.REFRESH_SECRET, (err, decoded) => {
             if (err) {
                 return res.status(403).json({ message: "Invalid or Expired Refresh Token" });
             }
 
-            const newAccessToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '5m' });
+            const newAccessToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, { expiresIn: "5m" });
 
             return res.status(200).json({
                 message: "Access Token Refreshed Successfully",
@@ -154,4 +150,3 @@ exports.refreshToken = async (req, res) => {
         return res.status(500).json({ message: "Error refreshing token", error: err.message });
     }
 };
-
